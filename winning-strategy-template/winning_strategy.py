@@ -191,11 +191,18 @@ class WinningStrategy(BaseStrategy):
         """Check if we're within risk limits (drawdown, etc.)."""
         current_value = portfolio.value(current_price)
         
+        # Initialize peak value on first call (fixes test scenarios with varied starting values)
+        if self.total_trades == 0 and current_value > 0:
+            self.peak_portfolio_value = max(self.peak_portfolio_value, current_value)
+        
         # Update peak value
         if current_value > self.peak_portfolio_value:
             self.peak_portfolio_value = current_value
             
-        # Check drawdown
+        # Check drawdown (avoid division by zero)
+        if self.peak_portfolio_value <= 0:
+            return True  # No drawdown check if no peak established
+            
         drawdown_pct = ((self.peak_portfolio_value - current_value) / self.peak_portfolio_value) * 100
         
         if drawdown_pct >= self.max_drawdown_limit:

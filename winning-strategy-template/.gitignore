@@ -1,0 +1,7 @@
+﻿# PDF generation helper scripts (not needed for deployment)
+generate_html.py
+generate_pdf.py
+generate_pdf_v2.py
+generate_pdf_weasy.py
+*.msi
+*.html

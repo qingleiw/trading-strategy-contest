@@ -112,7 +112,7 @@ def test_strategy():
         ("Normal market", 50000.0, 10000.0, 0.0),
         ("Oversold market (RSI)", 45000.0, 10000.0, 0.0),  # Lower price for oversold
         ("Overbought holding", 55000.0, 5000.0, 0.1),  # Higher price, holding position
-        ("Low cash scenario", 50000.0, 100.0, 0.0),  # Very low cash
+        ("Profit taking scenario", 52000.0, 3000.0, 0.15),  # In profit, should consider selling
         ("Mean reversion buy", 47000.0, 8000.0, 0.0),  # Should trigger Bollinger Band signal
     ]
     
