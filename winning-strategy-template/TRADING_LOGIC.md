@@ -1,6 +1,8 @@
 # Trading Logic Explanation
 ## Adaptive Momentum-Reversal Strategy
 
+**GitHub Repository:** https://github.com/qingleiw/trading-strategy-contest
+
 ### Strategy Philosophy
 
 Our strategy combines two complementary approaches:
@@ -116,9 +118,14 @@ final_position = base_position * volatility_adjustment
 
 ### Expected Behavior
 
-**Bull Market:** Strategy captures 70-80% of upward moves through momentum signals
+**Bull Market:** Strategy captures upward moves through momentum signals
 **Bear Market:** Strategy limits losses through stop-losses and reduced exposure  
 **Sideways Market:** Strategy profits from range-bound trading via mean reversion
 **Volatile Market:** Strategy reduces risk through smaller positions and tighter stops
 
-This comprehensive approach positions the strategy to profit across all market conditions while maintaining strict risk controls - the key to winning the contest!
+This comprehensive approach allows the strategy to adapt across all market conditions while maintaining strict risk controls.
+
+---
+
+**Repository:** https://github.com/qingleiw/trading-strategy-contest  
+**Strategy:** Adaptive Momentum-Reversal Trading Bot  

@@ -1,5 +1,5 @@
-# Winning Strategy Bot Requirements
-# Optimized for contest environment and maximum performance
+# Adaptive Momentum-Reversal Trading Bot Requirements
+# Optimized for cryptocurrency trading with technical analysis
 
 # Core dependencies from base template
 requests>=2.31.0

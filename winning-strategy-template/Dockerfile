@@ -1,4 +1,4 @@
-# Winning Strategy Bot - Contest Optimized Dockerfile
+# Adaptive Momentum-Reversal Trading Bot Dockerfile
 FROM python:3.11-slim
 
 # Set working directory
@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
 # Copy base template first (shared infrastructure)
 COPY base-bot-template/ /app/base/
 
-# Copy our winning strategy template
+# Copy strategy template
 COPY winning-strategy-template/ /app/strategy/
 
 # Install Python dependencies
@@ -32,9 +32,9 @@ ENV PYTHONPATH="/app/base:/app/strategy:$PYTHONPATH"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Contest-specific environment variables
-ENV STRATEGY_NAME="winning"
-ENV BOT_NAME="winning-strategy-bot"
+# Strategy environment variables
+ENV STRATEGY_NAME="adaptive_momentum"
+ENV BOT_NAME="momentum-reversal-bot"
 ENV LOG_LEVEL="INFO"
 
 # Health check
@@ -44,12 +44,12 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose ports for monitoring
 EXPOSE 8000 8001
 
-# Run the winning strategy bot
+# Run the trading strategy bot
 CMD ["python", "/app/strategy/startup.py"]
 
-# Labels for contest submission
+# Labels for deployment
 LABEL version="1.0"
-LABEL description="Winning Strategy Bot for Trading Contest"
-LABEL author="Contest Participant"
+LABEL description="Adaptive Momentum-Reversal Trading Bot"
+LABEL author="qingleiw"
 LABEL strategy="Adaptive Momentum-Reversal"
-LABEL target="Maximum PnL with <50% drawdown"
+LABEL indicators="RSI, MACD, Bollinger Bands"

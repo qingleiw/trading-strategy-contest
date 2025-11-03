@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quick test script for the Winning Strategy."""
+"""Quick test script for the Adaptive Momentum-Reversal Strategy."""
 
 import sys
 import os
@@ -82,8 +82,8 @@ sys.modules['exchange_interface'] = type('module', (), {
 from winning_strategy import WinningStrategy
 
 def test_strategy():
-    """Test the winning strategy with mock data."""
-    print("Testing Winning Strategy...")
+    """Test the momentum-reversal strategy with mock data."""
+    print("Testing Momentum-Reversal Strategy...")
     
     # Create strategy config
     config = {

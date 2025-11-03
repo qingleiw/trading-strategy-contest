@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Winning Strategy: Adaptive Momentum-Reversal Trading Bot
+"""Adaptive Momentum-Reversal Trading Bot
 
-This strategy combines multiple technical indicators to maximize profit:
+This strategy combines multiple technical indicators for robust trading:
 1. RSI for momentum detection and oversold/overbought conditions
 2. MACD for trend direction and momentum confirmation 
 3. Bollinger Bands for mean reversion opportunities
 4. Dynamic position sizing based on volatility
 5. Advanced risk management with stop-losses and drawdown protection
 
-Designed to win the $1,000 trading contest by maximizing PnL while staying under 50% drawdown.
+Optimized for cryptocurrency markets with adaptive risk management.
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ from exchange_interface import MarketSnapshot
 
 
 class WinningStrategy(BaseStrategy):
-    """Adaptive Momentum-Reversal Strategy optimized for maximum PnL.
+    """Adaptive Momentum-Reversal Strategy for cryptocurrency trading.
     
     This strategy uses multiple technical indicators:
     - RSI: Relative Strength Index for momentum
@@ -413,6 +413,6 @@ class WinningStrategy(BaseStrategy):
         self.ema_slow_history = deque(ema_slow, maxlen=50)
 
 
-# Register the winning strategy
-register_strategy("winning", WinningStrategy)
-register_strategy("adaptive_momentum", WinningStrategy)  # Alternative name
+# Register the momentum-reversal strategy
+register_strategy("adaptive_momentum", WinningStrategy)
+register_strategy("momentum_reversal", WinningStrategy)  # Alternative name

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Winning Strategy Bot - Startup Script
+"""Adaptive Momentum-Reversal Trading Bot - Startup Script
 
-Adaptive Momentum-Reversal Trading Bot designed to win the $1,000 trading contest.
 Combines RSI, MACD, and Bollinger Bands with advanced risk management.
+Multi-indicator strategy for cryptocurrency trading.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ def main() -> None:
     bot = UniversalBot(config_path)
 
     # Print startup info
-    print("WINNING STRATEGY BOT - Contest Edition")
+    print("ADAPTIVE MOMENTUM-REVERSAL TRADING BOT")
     print("=" * 60)
     print(f"Bot ID: {bot.config.bot_instance_id}")
     print(f"User ID: {bot.config.user_id}")
@@ -47,11 +47,8 @@ def main() -> None:
     print("   - Bollinger Bands mean reversion")
     print("   - Dynamic position sizing based on volatility")
     print("   - Stop-loss and take-profit automation")
-    print("   - Maximum 45% drawdown protection")
+    print("   - Drawdown protection")
     print("   - Trade throttling for optimal timing")
-    print()
-    print("TARGET: Maximize PnL while staying under 50% drawdown")
-    print("GOAL: Win $1,000 USD prize!")
     print("=" * 60)
 
     try:

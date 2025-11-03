@@ -3,8 +3,8 @@
   "symbol": "BTC-USD",
   "exchange": "paper",
   "starting_cash": 10000,
-  "bot_instance_id": "contest-winning-bot",
-  "user_id": "contestant",
+  "bot_instance_id": "momentum-reversal-bot",
+  "user_id": "trader",
   
   "comment": "=== RSI Parameters ===",
   "rsi_period": 14,
@@ -33,7 +33,7 @@
   "max_price_age_seconds": 300,
   
   "comment6": "=== Database & Logging ===",
-  "database_url": "postgresql://user:pass@localhost:5432/trading_contest",
+  "database_url": "postgresql://user:pass@localhost:5432/trading_bot",
   "log_level": "INFO",
   "strategy_local_logs": true
 }
