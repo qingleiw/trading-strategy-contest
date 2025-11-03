@@ -284,51 +284,99 @@ class WinningStrategy(BaseStrategy):
             
         # Check exit conditions first
         if portfolio.quantity > 0:
-            # Stop loss check
+            # Calculate current position P&L
+            total_cost = sum(pos['price'] * pos['size'] for pos in self.positions)
+            total_size = sum(pos['size'] for pos in self.positions)
+            avg_entry = total_cost / total_size if total_size > 0 else current_price
+            current_pnl_pct = ((current_price - avg_entry) / avg_entry) * 100
+            
+            # Stop loss check (higher priority)
             if self._should_stop_loss(portfolio, current_price):
                 return Signal("sell", size=portfolio.quantity, reason="Stop loss triggered")
                 
-            # Take profit check
+            # Take profit check - sell half instead of all to capture more upside
             if self._should_take_profit(portfolio, current_price):
-                return Signal("sell", size=portfolio.quantity, reason="Take profit triggered")
+                sell_size = portfolio.quantity * 0.6  # Sell 60%, keep 40% for potential upside
+                return Signal("sell", size=sell_size, reason="Take profit triggered (partial)")
+            
+            # Early profit taking: sell 50% if up 6%
+            if current_pnl_pct >= 6.0:
+                sell_size = portfolio.quantity * 0.5
+                return Signal("sell", size=sell_size, reason=f"Partial profit taking: +{current_pnl_pct:.1f}%")
                 
             # RSI overbought exit
             if rsi and rsi >= self.rsi_overbought:
                 return Signal("sell", size=portfolio.quantity, reason=f"RSI overbought: {rsi:.1f}")
+            
+            # MACD bearish signal - sell if turning negative
+            if macd_line and macd_signal and macd_line < macd_signal and macd_histogram and macd_histogram < 0:
+                return Signal("sell", size=portfolio.quantity, reason="MACD bearish crossover")
                 
             # Bollinger Band upper breach (mean reversion)
             if bb_upper and current_price >= bb_upper:
                 return Signal("sell", size=portfolio.quantity, reason="Price above upper Bollinger Band")
+            
+            # Trend reversal: price dropped 3% from recent high
+            if len(prices) >= 20:
+                recent_high = max(prices[-20:])
+                drop_from_high = ((recent_high - current_price) / recent_high) * 100
+                if drop_from_high >= 3.0 and current_pnl_pct > 2.0:  # Only if still in profit
+                    return Signal("sell", size=portfolio.quantity, reason=f"Trend reversal: -{drop_from_high:.1f}% from high")
                 
-        # Entry conditions (only if we have cash)
-        if portfolio.cash > 100:  # Minimum cash threshold
+        # Entry conditions (only if we have cash and not already heavily invested)
+        current_position_value = portfolio.quantity * current_price
+        total_portfolio_value = portfolio.cash + current_position_value
+        position_pct = current_position_value / total_portfolio_value if total_portfolio_value > 0 else 0
+        
+        if portfolio.cash > 100 and position_pct < 0.7:  # Don't over-invest
             buy_signals = 0
             buy_reasons = []
             
-            # RSI oversold
-            if rsi and rsi <= self.rsi_oversold:
-                buy_signals += 1
-                buy_reasons.append(f"RSI oversold: {rsi:.1f}")
+            # Check market trend - prefer buying in uptrends
+            if len(prices) >= 20:
+                short_trend = (prices[-1] - prices[-5]) / prices[-5]  # 5-period trend
+                medium_trend = (prices[-1] - prices[-20]) / prices[-20]  # 20-period trend
                 
-            # MACD bullish crossover
+                # Strong downtrend - avoid buying
+                if short_trend < -0.03 and medium_trend < -0.05:
+                    return Signal("hold", reason="Strong downtrend, waiting")
+                
+                # Uptrend bonus - easier to buy in rising market
+                if short_trend > 0.01 and medium_trend > 0.02:
+                    buy_signals += 1
+                    buy_reasons.append("Uptrend confirmed")
+            
+            # RSI recovery from oversold (better timing than pure oversold)
+            if rsi and 30 < rsi <= self.rsi_oversold + 5:  # Just recovering from oversold
+                buy_signals += 2  # Stronger weight
+                buy_reasons.append(f"RSI recovering: {rsi:.1f}")
+                
+            # MACD bullish crossover with strong momentum
             if macd_line and macd_signal and macd_line > macd_signal and macd_histogram and macd_histogram > 0:
                 buy_signals += 1
                 buy_reasons.append("MACD bullish")
                 
-            # Bollinger Band lower breach (mean reversion)
-            if bb_lower and current_price <= bb_lower:
-                buy_signals += 1
-                buy_reasons.append("Price below lower Bollinger Band")
+            # Bollinger Band lower breach (mean reversion opportunity)
+            if bb_lower and current_price <= bb_lower * 1.01:  # Within 1% of lower band
+                buy_signals += 2  # Strong signal
+                buy_reasons.append("Price at lower Bollinger Band")
                 
-            # Price momentum (recent upward movement)
-            if len(prices) >= 5:
-                recent_change = (prices[-1] - prices[-5]) / prices[-5]
-                if recent_change > 0.02:  # 2% upward movement
+            # Strong momentum breakout
+            if len(prices) >= 10:
+                recent_low = min(prices[-10:])
+                bounce = ((current_price - recent_low) / recent_low) * 100
+                
+                # Early in uptrend (bounced 2-5%)
+                if 2.0 <= bounce <= 5.0:
+                    buy_signals += 2
+                    buy_reasons.append(f"Momentum breakout: +{bounce:.1f}%")
+                # Small dip buying opportunity  
+                elif -1.0 <= bounce < 0:
                     buy_signals += 1
-                    buy_reasons.append("Positive momentum")
+                    buy_reasons.append(f"Dip buy opportunity")
                     
-            # Need at least 2 confirming signals
-            if buy_signals >= 2:
+            # Need at least 4 confirming signals (selective but not too restrictive)
+            if buy_signals >= 4:
                 position_size = self._calculate_position_size(current_price, portfolio, volatility)
                 if position_size > 0:
                     reason = f"Buy signals: {', '.join(buy_reasons[:2])}"
