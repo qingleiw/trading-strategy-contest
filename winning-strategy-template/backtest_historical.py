@@ -9,6 +9,10 @@ import os
 from datetime import datetime, timezone, timedelta
 from collections import deque
 import json
+import random
+
+# Set random seed for reproducible results
+random.seed(4)
 
 # Add base path for imports
 base_path = os.path.join(os.path.dirname(__file__), '..', 'base-bot-template')
@@ -118,7 +122,6 @@ def fetch_historical_data(symbol, start_date, end_date):
         for h in range(hours):
             timestamp = date1 + timedelta(hours=h)
             # Add realistic but controlled volatility (±1% random walk)
-            import random
             noise = random.uniform(-0.01, 0.01)
             base_price = price1 + (price_step * h)
             price = max(base_price * 0.95, base_price * (1 + noise))  # Prevent extreme drops
