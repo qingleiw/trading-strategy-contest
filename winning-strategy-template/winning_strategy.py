@@ -299,45 +299,39 @@ class WinningStrategy(BaseStrategy):
             if self._should_stop_loss(portfolio, current_price):
                 return Signal("sell", size=portfolio.quantity, reason="Stop loss triggered")
                 
-            # BALANCED STRATEGY: Hold winners longer, but still exit when appropriate
-            # Exit conditions (in priority order):
-            # 1. Take profit target reached -> Sell 80%
-            # 2. Strong overbought + bearish signals -> Sell 60%  
-            # 3. Moderate profit + reversal signals -> Sell 40%
+            # ULTRA-AGGRESSIVE STRATEGY: Quick profits, full exits for maximum compounding
+            # Exit conditions:
+            # 1. Take profit target -> Sell 100% (re-enter on next signal)
+            # 2. Any overbought signal -> Sell 100% (lock profits quickly)
+            # 3. Small profit + any weakness -> Sell 100% (protect gains)
             
-            # Take profit at target - sell most but keep 20% riding
+            # Take profit at target - sell 100% to maximize compounding
             if self._should_take_profit(portfolio, current_price):
-                sell_size = portfolio.quantity * 0.8
-                return Signal("sell", size=sell_size, reason=f"Take profit (80%): +{current_pnl_pct:.1f}%")
+                return Signal("sell", size=portfolio.quantity, reason=f"Take profit (100%): +{current_pnl_pct:.1f}%")
                 
-            # Strong technical weakness indicators
+            # Technical weakness indicators - more sensitive for quick exits
             overbought = rsi and rsi >= self.rsi_overbought
             bearish_macd = (macd_line and macd_signal and 
                            macd_line < macd_signal and 
-                           macd_histogram and macd_histogram < -1.0)
-            bb_breach = bb_upper and current_price >= bb_upper * 1.03  # 3% above upper band
+                           macd_histogram and macd_histogram < -0.5)  # More sensitive
+            bb_breach = bb_upper and current_price >= bb_upper * 1.01  # 1% above (tighter)
             
-            # Trend reversal check
+            # Trend reversal check - more aggressive
             reversal_signal = False
-            if len(prices) >= 20:
-                recent_high = max(prices[-20:])
+            if len(prices) >= 15:  # Shorter lookback
+                recent_high = max(prices[-15:])
                 drop_from_high = ((recent_high - current_price) / recent_high) * 100
-                if drop_from_high >= 5.0 and current_pnl_pct > 0:
+                if drop_from_high >= 3.0 and current_pnl_pct > 0:  # 3% drop (tighter)
                     reversal_signal = True
             
-            # Exit on strong combined weakness (sell majority)
-            if overbought and bearish_macd:
-                sell_size = portfolio.quantity * 0.6
-                return Signal("sell", size=sell_size, reason=f"Strong weakness (60%): RSI {rsi:.1f} + MACD bearish")
+            # Exit on ANY weakness signal - full position
+            if overbought or bearish_macd or bb_breach or reversal_signal:
+                if current_pnl_pct >= 10:  # Any profit above 10%
+                    return Signal("sell", size=portfolio.quantity, reason=f"Quick exit (100%): +{current_pnl_pct:.1f}%")
             
-            if overbought and bb_breach:
-                sell_size = portfolio.quantity * 0.6
-                return Signal("sell", size=sell_size, reason=f"Extreme extension (60%): RSI {rsi:.1f} + BB +3%")
-            
-            # Exit on moderate profit + any weakness signal (sell some)
-            if current_pnl_pct >= 20 and (overbought or bearish_macd or reversal_signal):
-                sell_size = portfolio.quantity * 0.4
-                return Signal("sell", size=sell_size, reason=f"Defensive exit (40%): +{current_pnl_pct:.1f}% + weakness")
+            # Exit on smaller profit with strong weakness
+            if current_pnl_pct >= 5 and (overbought and (bearish_macd or reversal_signal)):
+                return Signal("sell", size=portfolio.quantity, reason=f"Fast exit (100%): +{current_pnl_pct:.1f}%")
                 
         # Entry conditions - aim to stay invested in uptrend markets
         current_position_value = portfolio.quantity * current_price
@@ -397,7 +391,7 @@ class WinningStrategy(BaseStrategy):
                     buy_signals += 1
                     buy_reasons.append(f"Dip buy opportunity")
                     
-            # Need at least 2 confirming signals (easier to enter in uptrends)
+            # Need at least 2 confirming signals for quality entries
             if buy_signals >= 2:
                 position_size = self._calculate_position_size(current_price, portfolio, volatility)
                 if position_size > 0:
