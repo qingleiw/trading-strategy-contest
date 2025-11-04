@@ -3,8 +3,6 @@
 
 **GitHub Repository:** https://github.com/qingleiw/trading-strategy-contest
 
-**Contest Results:** 🏆 **45.97% Return** | 1.92% Drawdown | 100% Win Rate
-
 ### Strategy Philosophy
 
 Our strategy combines momentum and mean reversion with intelligent staged exits:
@@ -205,5 +203,4 @@ position_value = available_cash * 0.95
 
 **Repository:** https://github.com/qingleiw/trading-strategy-contest  
 **Strategy:** Adaptive Momentum-Reversal Trading Bot  
-**Final Results:** 🏆 45.97% Return | 1.92% Drawdown | 100% Win Rate  
 **Submission Date:** November 3, 2025

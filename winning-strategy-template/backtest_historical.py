@@ -296,12 +296,12 @@ if __name__ == "__main__":
     print("=" * 70)
     
     # Verdict
-    print("\n✅ BACKTEST VERIFICATION:")
+    print("\nBACKTEST VERIFICATION:")
     print(f"   Return: {combined_return:+.2f}% (Target: >30%)")
     print(f"   Drawdown: {avg_drawdown:.2f}% (Limit: <50%)")
     print(f"   Trades: {total_trades} (Minimum: 10)")
     
     if combined_return > 30 and avg_drawdown < 50 and total_trades >= 10:
-        print("\n🎉 Strategy PASSED all contest requirements!")
+        print("\nStrategy PASSED all contest requirements!")
     else:
         print("\n⚠️ Strategy needs parameter tuning")
