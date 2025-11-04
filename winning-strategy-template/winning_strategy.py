@@ -250,7 +250,12 @@ class WinningStrategy(BaseStrategy):
     def generate_signal(self, market: MarketSnapshot, portfolio: Portfolio) -> Signal:
         """Generate trading signal based on technical indicators."""
         current_price = market.current_price
-        now = datetime.now(timezone.utc)
+        # Use market timestamp if available, otherwise current time
+        if hasattr(market, 'timestamp') and market.timestamp:
+            # Ensure timestamp is timezone-aware
+            now = market.timestamp.replace(tzinfo=timezone.utc) if market.timestamp.tzinfo is None else market.timestamp
+        else:
+            now = datetime.now(timezone.utc)
         
         # Update price history
         self.price_history.append(current_price)
@@ -294,57 +299,74 @@ class WinningStrategy(BaseStrategy):
             if self._should_stop_loss(portfolio, current_price):
                 return Signal("sell", size=portfolio.quantity, reason="Stop loss triggered")
                 
-            # Take profit check - sell half instead of all to capture more upside
+            # BALANCED STRATEGY: Hold winners longer, but still exit when appropriate
+            # Exit conditions (in priority order):
+            # 1. Take profit target reached -> Sell 80%
+            # 2. Strong overbought + bearish signals -> Sell 60%  
+            # 3. Moderate profit + reversal signals -> Sell 40%
+            
+            # Take profit at target - sell most but keep 20% riding
             if self._should_take_profit(portfolio, current_price):
-                sell_size = portfolio.quantity * 0.6  # Sell 60%, keep 40% for potential upside
-                return Signal("sell", size=sell_size, reason="Take profit triggered (partial)")
-            
-            # Early profit taking: sell 50% if up 6%
-            if current_pnl_pct >= 6.0:
-                sell_size = portfolio.quantity * 0.5
-                return Signal("sell", size=sell_size, reason=f"Partial profit taking: +{current_pnl_pct:.1f}%")
+                sell_size = portfolio.quantity * 0.8
+                return Signal("sell", size=sell_size, reason=f"Take profit (80%): +{current_pnl_pct:.1f}%")
                 
-            # RSI overbought exit
-            if rsi and rsi >= self.rsi_overbought:
-                return Signal("sell", size=portfolio.quantity, reason=f"RSI overbought: {rsi:.1f}")
+            # Strong technical weakness indicators
+            overbought = rsi and rsi >= self.rsi_overbought
+            bearish_macd = (macd_line and macd_signal and 
+                           macd_line < macd_signal and 
+                           macd_histogram and macd_histogram < -1.0)
+            bb_breach = bb_upper and current_price >= bb_upper * 1.03  # 3% above upper band
             
-            # MACD bearish signal - sell if turning negative
-            if macd_line and macd_signal and macd_line < macd_signal and macd_histogram and macd_histogram < 0:
-                return Signal("sell", size=portfolio.quantity, reason="MACD bearish crossover")
-                
-            # Bollinger Band upper breach (mean reversion)
-            if bb_upper and current_price >= bb_upper:
-                return Signal("sell", size=portfolio.quantity, reason="Price above upper Bollinger Band")
-            
-            # Trend reversal: price dropped 3% from recent high
+            # Trend reversal check
+            reversal_signal = False
             if len(prices) >= 20:
                 recent_high = max(prices[-20:])
                 drop_from_high = ((recent_high - current_price) / recent_high) * 100
-                if drop_from_high >= 3.0 and current_pnl_pct > 2.0:  # Only if still in profit
-                    return Signal("sell", size=portfolio.quantity, reason=f"Trend reversal: -{drop_from_high:.1f}% from high")
+                if drop_from_high >= 5.0 and current_pnl_pct > 0:
+                    reversal_signal = True
+            
+            # Exit on strong combined weakness (sell majority)
+            if overbought and bearish_macd:
+                sell_size = portfolio.quantity * 0.6
+                return Signal("sell", size=sell_size, reason=f"Strong weakness (60%): RSI {rsi:.1f} + MACD bearish")
+            
+            if overbought and bb_breach:
+                sell_size = portfolio.quantity * 0.6
+                return Signal("sell", size=sell_size, reason=f"Extreme extension (60%): RSI {rsi:.1f} + BB +3%")
+            
+            # Exit on moderate profit + any weakness signal (sell some)
+            if current_pnl_pct >= 20 and (overbought or bearish_macd or reversal_signal):
+                sell_size = portfolio.quantity * 0.4
+                return Signal("sell", size=sell_size, reason=f"Defensive exit (40%): +{current_pnl_pct:.1f}% + weakness")
                 
-        # Entry conditions (only if we have cash and not already heavily invested)
+        # Entry conditions - aim to stay invested in uptrend markets
         current_position_value = portfolio.quantity * current_price
         total_portfolio_value = portfolio.cash + current_position_value
         position_pct = current_position_value / total_portfolio_value if total_portfolio_value > 0 else 0
         
-        if portfolio.cash > 100 and position_pct < 0.7:  # Don't over-invest
+        # In uptrend markets, aim for high allocation (80-90%)
+        target_allocation = 0.85
+        if portfolio.cash > 100 and position_pct < target_allocation:
             buy_signals = 0
             buy_reasons = []
             
-            # Check market trend - prefer buying in uptrends
+            # Check market trend - strongly favor uptrends
             if len(prices) >= 20:
-                short_trend = (prices[-1] - prices[-5]) / prices[-5]  # 5-period trend
-                medium_trend = (prices[-1] - prices[-20]) / prices[-20]  # 20-period trend
+                short_trend = (prices[-1] - prices[-5]) / prices[-5]
+                medium_trend = (prices[-1] - prices[-20]) / prices[-20]
+                long_trend = (prices[-1] - prices[-50]) / prices[-50] if len(prices) >= 50 else medium_trend
                 
-                # Strong downtrend - avoid buying
-                if short_trend < -0.03 and medium_trend < -0.05:
-                    return Signal("hold", reason="Strong downtrend, waiting")
+                # Only avoid buying in severe downtrends
+                if medium_trend < -0.10:  # Down 10%+ 
+                    return Signal("hold", reason="Severe downtrend")
                 
-                # Uptrend bonus - easier to buy in rising market
-                if short_trend > 0.01 and medium_trend > 0.02:
+                # Strong uptrend - add multiple signals
+                if long_trend > 0.05:  # Up 5%+ over long term
+                    buy_signals += 2
+                    buy_reasons.append("Strong long-term uptrend")
+                elif medium_trend > 0.02:
                     buy_signals += 1
-                    buy_reasons.append("Uptrend confirmed")
+                    buy_reasons.append("Medium uptrend")
             
             # RSI recovery from oversold (better timing than pure oversold)
             if rsi and 30 < rsi <= self.rsi_oversold + 5:  # Just recovering from oversold
@@ -375,8 +397,8 @@ class WinningStrategy(BaseStrategy):
                     buy_signals += 1
                     buy_reasons.append(f"Dip buy opportunity")
                     
-            # Need at least 4 confirming signals (selective but not too restrictive)
-            if buy_signals >= 4:
+            # Need at least 2 confirming signals (easier to enter in uptrends)
+            if buy_signals >= 2:
                 position_size = self._calculate_position_size(current_price, portfolio, volatility)
                 if position_size > 0:
                     reason = f"Buy signals: {', '.join(buy_reasons[:2])}"
