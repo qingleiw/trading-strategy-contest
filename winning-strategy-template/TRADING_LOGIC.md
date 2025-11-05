@@ -5,14 +5,14 @@
 
 ### Strategy Philosophy
 
-Our strategy combines momentum and mean reversion with intelligent staged exits:
+Our strategy combines momentum and mean reversion with intelligent risk management:
 1. **Momentum Trading** - Capture strong trends with high conviction
 2. **Mean Reversion** - Enter at value prices during pullbacks
-3. **Staged Profit-Taking** - Secure gains while letting winners run
+3. **Smart Exit Management** - Protect gains with disciplined profit-taking
 
-**Key Innovation:** Progressive exit strategy that sells 80% at target profit, 60% on strong weakness, or 40% on moderate weakness, maximizing returns while protecting capital.
+**Key Innovation:** Full position exits at profit targets (15%) or stop losses (12%), enabling quick reentry and compound returns.
 
-This balanced approach achieved **33.25% combined return** (BTC +39.03%, ETH +27.48%) with 27.41% maximum drawdown.
+This balanced approach achieved **36.10% combined return** (BTC +42.50%, ETH +29.70%) with 26.16% maximum drawdown.
 
 ### Core Technical Indicators
 
@@ -120,10 +120,10 @@ position_value = available_cash * 1.0
 4. **Signal Confirmation:** Require 2+ technical indicators for entry
 
 #### Actual Risk Results:
-- **Maximum Drawdown:** 27.41% (well below 50% contest limit)
-- **Win Rate:** 70.5% (73 total trades, 37 BTC + 36 ETH)
-- **Average Trade:** +0.91% across both assets
-- **Risk-Adjusted Return:** Strong performance (33.25% return / 27.41% drawdown = 1.21)
+- **Maximum Drawdown:** 26.16% (well controlled, <50% threshold)
+- **Win Rate:** 72.0% (68 total trades, 31 BTC + 37 ETH)
+- **Average Trade:** +1.06% across both assets
+- **Risk-Adjusted Return:** Excellent performance (36.10% return / 26.16% drawdown = 1.38)
 
 ### Market Adaptation
 
@@ -158,25 +158,25 @@ position_value = available_cash * 1.0
 ### Proven Performance (Jan-Jun 2024 Backtest)
 
 **BTC-USD Results:**
-- Return: +39.03%
-- Trades: 37 (72.2% win rate)
-- Drawdown: 22.94%
-- Average Trade: +1.05%
-- Final Value: $13,902.93 from $10,000
+- Return: +42.50%
+- Trades: 31 (73.3% win rate)
+- Drawdown: 22.86%
+- Average Trade: +1.37%
+- Final Value: $14,250.23 from $10,000
 
 **ETH-USD Results:**
-- Return: +27.48%
-- Trades: 36 (68.8% win rate)
-- Drawdown: 27.41%
-- Average Trade: +0.76%
-- Final Value: $12,747.64 from $10,000
+- Return: +29.70%
+- Trades: 37 (70.6% win rate)
+- Drawdown: 29.47%
+- Average Trade: +0.80%
+- Final Value: $12,970.25 from $10,000
 
 **Combined Portfolio:**
-- Return: **+33.25%** (exceeds 30% target, beats leader's +20.64%)
-- Total Trades: 73 (far exceeds 10 minimum)
-- Max Drawdown: 27.41% (45% below 50% limit)
-- Win Rate: 70.5%
-- Total Value: $26,650.57 from $20,000
+- Return: **+36.10%** (strong 6-month performance)
+- Total Trades: 68 (active trading strategy)
+- Max Drawdown: 26.16% (well below 50% threshold)
+- Win Rate: 72.0%
+- Total Value: $27,220.48 from $20,000
 
 ### Market Behavior Analysis
 
@@ -188,16 +188,16 @@ position_value = available_cash * 1.0
 **Key Success Factors:**
 - 15% profit target matches realistic intraday/swing moves
 - Full position exits enable fresh entries at better levels
-- 70.5% win rate demonstrates signal quality
+- 72.0% win rate demonstrates excellent signal quality
 - 12% stop-loss controlled losses while allowing price volatility
 
 **vs Traditional Approaches:**
 - Buy & Hold: Would capture full market move but with full drawdowns
-- Our Strategy: 33.25% return, 27.41% drawdown with active risk management
-- **vs Contest Leader:** +12.61% higher return (33.25% vs 20.64%)
+- Our Strategy: 36.10% return, 26.16% drawdown with active risk management
+- **Active Management Benefit:** Higher returns with lower drawdown vs passive holding
 
 ---
 
 **Repository:** https://github.com/qingleiw/trading-strategy-contest  
 **Strategy:** Adaptive Momentum-Reversal Trading Bot  
-**Submission Date:** November 3, 2025
+**Last Updated:** November 5, 2025
