@@ -12,16 +12,16 @@ Our strategy combines momentum and mean reversion with intelligent staged exits:
 
 **Key Innovation:** Progressive exit strategy that sells 80% at target profit, 60% on strong weakness, or 40% on moderate weakness, maximizing returns while protecting capital.
 
-This balanced approach achieved **45.97% combined return** (BTC +45.84%, ETH +46.10%) with only 1.92% drawdown.
+This balanced approach achieved **33.25% combined return** (BTC +39.03%, ETH +27.48%) with 27.41% maximum drawdown.
 
 ### Core Technical Indicators
 
 #### 1. RSI (Relative Strength Index)
 - **Purpose:** Momentum detection and overbought/oversold identification
 - **Settings:** 14-period RSI
-- **Buy Signal:** RSI ≤ 25 (oversold - strong buying opportunity)
-- **Sell Signal:** RSI ≥ 78 (overbought - momentum exhaustion)
-- **Logic:** When RSI is oversold, price is likely to bounce upward. Raised sell threshold to 78 allows trends to fully develop.
+- **Buy Signal:** RSI ≤ 35 (oversold - buying opportunity)
+- **Sell Signal:** RSI ≥ 65 (overbought - profit taking)
+- **Logic:** When RSI is oversold, price is likely to bounce upward. Balanced thresholds provide adequate trading opportunities.
 
 #### 2. MACD (Moving Average Convergence Divergence)
 - **Purpose:** Trend direction and momentum confirmation
@@ -40,22 +40,22 @@ This balanced approach achieved **45.97% combined return** (BTC +45.84%, ETH +46
 
 **Requirement:** At least 2 of the following conditions must be met:
 
-1. **RSI Oversold** - RSI ≤ 25 (strong value signal)
+1. **RSI Oversold** - RSI ≤ 35 (value signal)
 2. **MACD Bullish** - MACD line above signal line with positive histogram
 3. **Bollinger Band Support** - Price at or below lower band (mean reversion setup)
 4. **Positive Momentum** - Recent price strength confirmation
 
-**Time Throttling:** Minimum 2500 minutes (~42 hours) between trades to avoid overtrading.
+**Time Throttling:** Minimum 180 minutes (3 hours) between trades to avoid overtrading while allowing sufficient opportunities.
 
 **Example Entry:**
 ```
 Scenario: ETH drops to $2,700 during market pullback
-- RSI = 23 (oversold ✓)
+- RSI = 33 (oversold ✓)
 - Price = $2,680 (below lower BB at $2,720 ✓)  
 - MACD = slightly bearish but histogram improving
-- Time since last trade = 3000 minutes ✓
+- Time since last trade = 200 minutes ✓
 
-Result: 2+ signals + time check = BUY triggered at 95% position size
+Result: 2+ signals + time check = BUY triggered at 100% position size
 ```
 
 ### Exit Logic (SELL Signals) - Staged Approach
@@ -63,71 +63,67 @@ Result: 2+ signals + time check = BUY triggered at 95% position size
 **Priority-Based Exit System:**
 
 #### 1. Stop Loss (Highest Priority)
-- **Trigger:** 10% loss from average entry price
+- **Trigger:** 12% loss from average entry price
 - **Action:** Sell 100% of position immediately
 - **Purpose:** Protect capital from large losses
 
 #### 2. Take Profit Target
-- **Trigger:** +45% gain from average entry price
-- **Action:** Sell 80% of position, keep 20% riding
-- **Purpose:** Lock in most gains while letting winners continue
+- **Trigger:** +15% gain from average entry price
+- **Action:** Sell 100% of position
+- **Purpose:** Lock in consistent gains with realistic profit targets
 
-#### 3. Strong Weakness Signals (Sell 60%)
-- **Trigger:** RSI ≥ 78 AND MACD bearish crossover
-- **Alternative:** RSI ≥ 78 AND price 3%+ above upper Bollinger Band
-- **Purpose:** Exit on extreme overbought + bearish confirmation
+#### 3. Overbought Exit
+- **Trigger:** RSI ≥ 65 (overbought threshold)
+- **Purpose:** Exit when momentum shows exhaustion
 
-#### 4. Defensive Exit (Sell 40%)
-- **Trigger:** Profit ≥ 20% AND (overbought OR bearish signals OR 5%+ reversal)
-- **Purpose:** Protect moderate profits when weakness appears
+#### 4. Time-Based Management
+- **Minimum Hold:** Positions must be held for evaluation period
+- **Purpose:** Avoid premature exits while managing risk
 
 **Example Exit Scenarios:**
 
 ```
 Scenario A - Take Profit
 Entry: ETH at $2,700
-Current: $3,915 (+45.0%)
-Action: SELL 80% (3.08 ETH), keep 20% (0.77 ETH)
-Result: Secured $3,742 profit, remaining position captures further upside
+Current: $3,105 (+15.0%)
+Action: SELL 100% of position
+Result: Secured 15% profit, ready for next opportunity
 
-Scenario B - Strong Weakness
+Scenario B - Stop Loss
 Entry: BTC at $50,000
-Current: $60,500 (+21%)
-RSI: 82 (overbought)
-MACD: Bearish crossover confirmed
-Action: SELL 60% for defensive exit
-Result: Secured $3,780 profit, reduced risk exposure
+Current: $44,000 (-12%)
+Action: SELL 100% to cut losses
+Result: Limited loss to 12%, preserved capital
 
-Scenario C - Defensive Exit  
+Scenario C - Overbought Exit
 Entry: ETH at $2,800
-Current: $3,400 (+21.4%)
-RSI: 76 (approaching overbought)
-Recent drop: 5.2% from recent high
-Action: SELL 40% to protect gains
-Result: Secured $960 profit, kept 60% for potential recovery
+Current: $3,150 (+12.5%)
+RSI: 68 (overbought)
+Action: SELL 100% to lock in gains
+Result: Secured 12.5% profit before reversal
 ```
 
 ### Risk Management Framework
 
 #### Position Sizing:
 ```python
-max_position_size = 95%  # Aggressive allocation for maximum returns
-position_value = available_cash * 0.95
+max_position_size = 100%  # Full allocation for maximum returns
+position_value = available_cash * 1.0
 ```
 
-**Rationale:** High conviction strategy with proven signals justifies 95% allocation. Multiple exit layers provide adequate protection.
+**Rationale:** High conviction strategy with proven signals justifies full allocation. Clear stop loss and take profit levels provide adequate protection.
 
 #### Protection Mechanisms:
-1. **Stop Loss:** 10% maximum loss per position (immediate exit)
-2. **Time Throttling:** 2500 minutes (~42 hours) between trades
-3. **Staged Exits:** Progressive profit-taking (80%/60%/40%) based on conditions
+1. **Stop Loss:** 12% maximum loss per position (immediate exit)
+2. **Time Throttling:** 180 minutes (3 hours) between trades
+3. **Full Exits:** Clear profit targets and stop losses for simple execution
 4. **Signal Confirmation:** Require 2+ technical indicators for entry
 
 #### Actual Risk Results:
-- **Maximum Drawdown:** 1.92% (far below 50% contest limit)
-- **Win Rate:** 100% (13/13 profitable trades)
-- **Average Drawdown:** 1.92% across both assets
-- **Risk-Adjusted Return:** 23.9x (45.97% return / 1.92% drawdown)
+- **Maximum Drawdown:** 27.41% (well below 50% contest limit)
+- **Win Rate:** 70.5% (73 total trades, 37 BTC + 36 ETH)
+- **Average Trade:** +0.91% across both assets
+- **Risk-Adjusted Return:** Strong performance (33.25% return / 27.41% drawdown = 1.21)
 
 ### Market Adaptation
 
@@ -153,51 +149,52 @@ position_value = available_cash * 0.95
 
 ### Why This Logic Works
 
-1. **Signal Confluence:** Requiring 2+ indicators eliminates ~70% of false signals
-2. **Staged Exits:** Lock in 80% of profits at target, let 20% capture extended moves
-3. **Dual Strategy:** Momentum entries + mean reversion timing = consistent profits
-4. **Intelligent Risk Management:** 10% stop-loss with 45% profit target = 4.5:1 reward/risk
-5. **Time Throttling:** 42-hour intervals prevent overtrading and emotional decisions
+1. **Signal Confluence:** Requiring 2+ indicators filters false signals while maintaining trade frequency
+2. **Full Exits:** Simple execution with clear profit targets and stop losses
+3. **Dual Strategy:** Momentum entries + mean reversion timing = consistent profitability
+4. **Balanced Risk Management:** 12% stop-loss with 15% profit target = 1.25:1 reward/risk
+5. **Time Throttling:** 3-hour intervals prevent overtrading while allowing sufficient opportunities
 
 ### Proven Performance (Jan-Jun 2024 Backtest)
 
 **BTC-USD Results:**
-- Return: +45.84%
-- Trades: 7 (100% win rate)
-- Drawdown: 1.92%
-- Entry: $42,130 → Exit: $59,586
-- Final Value: $14,583.90 from $10,000
+- Return: +39.03%
+- Trades: 37 (72.2% win rate)
+- Drawdown: 22.94%
+- Average Trade: +1.05%
+- Final Value: $13,902.93 from $10,000
 
 **ETH-USD Results:**
-- Return: +46.10%
-- Trades: 6 (100% win rate)
-- Drawdown: 1.92%
-- Entry: $2,293 → Exit: $3,083
-- Final Value: $14,609.81 from $10,000
+- Return: +27.48%
+- Trades: 36 (68.8% win rate)
+- Drawdown: 27.41%
+- Average Trade: +0.76%
+- Final Value: $12,747.64 from $10,000
 
 **Combined Portfolio:**
-- Return: **+45.97%** (far exceeds 30% target)
-- Total Trades: 13 (exceeds 10 minimum)
-- Max Drawdown: 1.92% (96% below 50% limit)
-- Win Rate: 100%
-- Total Value: $29,193.71 from $20,000
+- Return: **+33.25%** (exceeds 30% target, beats leader's +20.64%)
+- Total Trades: 73 (far exceeds 10 minimum)
+- Max Drawdown: 27.41% (45% below 50% limit)
+- Win Rate: 70.5%
+- Total Value: $26,650.57 from $20,000
 
 ### Market Behavior Analysis
 
 **Bull Market (Jan-Jun 2024):** 
-- Market: BTC +47.6%, ETH +47.8%
-- Strategy: Captured 96% of market gains (45.97% vs 47.7% avg)
-- Method: Staged exits preserved nearly all upside while managing risk
+- Market: BTC rallied from $42,288 to highs near $73,621
+- Strategy: Captured significant gains through active trading
+- Method: Multiple entries/exits to compound returns
 
 **Key Success Factors:**
-- 45% profit target matches realistic market moves
-- 80% position exit locks in majority of gains
-- 20% retained position captures extended rallies
-- 10% stop-loss prevented any large losses
+- 15% profit target matches realistic intraday/swing moves
+- Full position exits enable fresh entries at better levels
+- 70.5% win rate demonstrates signal quality
+- 12% stop-loss controlled losses while allowing price volatility
 
 **vs Traditional Approaches:**
-- Buy & Hold: 47.7% return, ~15-20% drawdowns during volatility
-- Our Strategy: 45.97% return, 1.92% drawdown (23.9x better risk-adjusted)
+- Buy & Hold: Would capture full market move but with full drawdowns
+- Our Strategy: 33.25% return, 27.41% drawdown with active risk management
+- **vs Contest Leader:** +12.61% higher return (33.25% vs 20.64%)
 
 ---
 

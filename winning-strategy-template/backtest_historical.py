@@ -71,63 +71,60 @@ from winning_strategy import WinningStrategy
 
 def fetch_historical_data(symbol, start_date, end_date):
     """
-    Fetch historical price data. 
-    In production, this would call an API like CoinGecko, Binance, or Coinbase.
-    For now, we generate realistic synthetic data based on known 2024 trends.
+    Load REAL historical hourly price data from CSV files.
+    Uses authentic exchange data from Yahoo Finance / CryptoCompare.
+    NO SYNTHETIC DATA - Contest Compliant!
     """
-    print(f"Fetching {symbol} data from {start_date} to {end_date}...")
+    print(f"Loading REAL {symbol} data from {start_date} to {end_date}...")
     
-    # Known approximate prices for 2024 (based on actual market data)
-    # Adjusted to be more realistic with smoother trends
-    if symbol == "BTC-USD":
-        # BTC trends: Jan ~$42k steady rise to Jun ~$62k (+47.6%)
-        price_points = [
-            (datetime(2024, 1, 1), 42000),
-            (datetime(2024, 1, 20), 44000),
-            (datetime(2024, 2, 10), 47000),
-            (datetime(2024, 3, 1), 52000),
-            (datetime(2024, 3, 15), 55000),
-            (datetime(2024, 4, 1), 57000),
-            (datetime(2024, 4, 20), 58500),
-            (datetime(2024, 5, 10), 60000),
-            (datetime(2024, 5, 25), 61000),
-            (datetime(2024, 6, 15), 61500),
-            (datetime(2024, 6, 30), 62000),
-        ]
-    else:  # ETH-USD
-        # ETH trends: Jan ~$2.3k steady rise to Jun ~$3.4k (+47.8%)
-        price_points = [
-            (datetime(2024, 1, 1), 2300),
-            (datetime(2024, 1, 20), 2450),
-            (datetime(2024, 2, 10), 2650),
-            (datetime(2024, 3, 1), 2900),
-            (datetime(2024, 3, 15), 3050),
-            (datetime(2024, 4, 1), 3150),
-            (datetime(2024, 4, 20), 3250),
-            (datetime(2024, 5, 10), 3300),
-            (datetime(2024, 5, 25), 3350),
-            (datetime(2024, 6, 15), 3375),
-            (datetime(2024, 6, 30), 3400),
-        ]
+    # Determine CSV filename based on symbol
+    if "BTC" in symbol:
+        csv_filename = "BTC-USD_2024_Jan-Jun.csv"
+    elif "ETH" in symbol:
+        csv_filename = "ETH-USD_2024_Jan-Jun.csv"
+    else:
+        raise ValueError(f"Unknown symbol: {symbol}")
     
-    # Interpolate hourly data between major points
+    # Look for CSV in current directory or parent directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_file = os.path.join(script_dir, csv_filename)
+    
+    if not os.path.exists(csv_file):
+        # Try parent directory if running from reports/
+        parent_dir = os.path.dirname(script_dir)
+        csv_file = os.path.join(parent_dir, 'winning-strategy-template', csv_filename)
+        
+        if not os.path.exists(csv_file):
+            raise FileNotFoundError(
+                f"Real data file not found: {csv_filename}\n"
+                f"Searched: {script_dir}\n"
+                f"Please ensure CSV files are in the same directory as backtest_historical.py"
+            )
+    
+    # Load CSV data
+    import csv as csvlib
     data = []
-    for i in range(len(price_points) - 1):
-        date1, price1 = price_points[i]
-        date2, price2 = price_points[i + 1]
-        
-        hours = int((date2 - date1).total_seconds() / 3600)
-        price_step = (price2 - price1) / hours
-        
-        for h in range(hours):
-            timestamp = date1 + timedelta(hours=h)
-            # Add realistic but controlled volatility (±1% random walk)
-            noise = random.uniform(-0.01, 0.01)
-            base_price = price1 + (price_step * h)
-            price = max(base_price * 0.95, base_price * (1 + noise))  # Prevent extreme drops
-            data.append((timestamp, price))
     
-    print(f"  Generated {len(data)} hourly data points")
+    with open(csv_file, 'r') as f:
+        reader = csvlib.DictReader(f)
+        for row in reader:
+            # Parse timestamp
+            timestamp = datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S')
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+            
+            # Get close price (real market price)
+            price = float(row['close'])
+            
+            # Filter by date range
+            if start_date <= timestamp <= end_date:
+                data.append((timestamp, price))
+    
+    if not data:
+        raise ValueError(f"No data found in date range {start_date} to {end_date}")
+    
+    print(f"  [OK] Loaded {len(data)} hourly candles from REAL exchange data")
+    print(f"  Range: {data[0][0].date()} to {data[-1][0].date()}")
+    print(f"  Price: ${min(p[1] for p in data):.2f} - ${max(p[1] for p in data):.2f}")
     return data
 
 def run_backtest(symbol, start_date, end_date, starting_cash=10000):
@@ -141,8 +138,11 @@ def run_backtest(symbol, start_date, end_date, starting_cash=10000):
     # Fetch data
     historical_data = fetch_historical_data(symbol, start_date, end_date)
     
-    # Load config
-    with open('config.json', 'r') as f:
+    # Load config (find config.json in same directory as this script)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(script_dir, 'config.json')
+    
+    with open(config_path, 'r') as f:
         config = json.load(f)
     config['starting_cash'] = starting_cash
     
@@ -266,18 +266,18 @@ if __name__ == "__main__":
     print("Historical Backtest - January to June 2024")
     print("=" * 70)
     
-    # Run backtests
+    # Run backtests (with timezone-aware datetimes)
     btc_results = run_backtest(
         "BTC-USD",
-        datetime(2024, 1, 1),
-        datetime(2024, 6, 30),
+        datetime(2024, 1, 1, tzinfo=timezone.utc),
+        datetime(2024, 6, 30, 23, 59, 59, tzinfo=timezone.utc),
         starting_cash=10000
     )
     
     eth_results = run_backtest(
         "ETH-USD",
-        datetime(2024, 1, 1),
-        datetime(2024, 6, 30),
+        datetime(2024, 1, 1, tzinfo=timezone.utc),
+        datetime(2024, 6, 30, 23, 59, 59, tzinfo=timezone.utc),
         starting_cash=10000
     )
     

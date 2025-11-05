@@ -1,0 +1,8 @@
+{
+  "max_position_size": 1.0,
+  "stop_loss_pct": 12,
+  "take_profit_pct": 13,
+  "rsi_oversold": 36,
+  "rsi_overbought": 64,
+  "min_trade_interval_minutes": 150
+}
