@@ -12,6 +12,9 @@ numpy>=1.24.0
 pandas>=2.0.0
 scipy>=1.11.0
 
+# Yahoo Finance data downloader
+yfinance>=0.2.28
+
 # Enhanced logging and monitoring
 structlog>=23.2.0
 colorlog>=6.8.0

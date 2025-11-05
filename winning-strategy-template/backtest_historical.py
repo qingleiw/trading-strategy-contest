@@ -71,58 +71,61 @@ from winning_strategy import WinningStrategy
 
 def fetch_historical_data(symbol, start_date, end_date):
     """
-    Load REAL historical hourly price data from CSV files.
-    Uses authentic exchange data from Yahoo Finance / CryptoCompare.
+    Download REAL historical hourly price data using yfinance.
+    Uses authentic exchange data directly from Yahoo Finance API.
     NO SYNTHETIC DATA - Contest Compliant!
     """
-    print(f"Loading REAL {symbol} data from {start_date} to {end_date}...")
+    print(f"Downloading REAL {symbol} data from {start_date} to {end_date}...")
     
-    # Determine CSV filename based on symbol
-    if "BTC" in symbol:
-        csv_filename = "BTC-USD_2024_Jan-Jun.csv"
-    elif "ETH" in symbol:
-        csv_filename = "ETH-USD_2024_Jan-Jun.csv"
-    else:
-        raise ValueError(f"Unknown symbol: {symbol}")
+    try:
+        import yfinance as yf
+    except ImportError:
+        print("ERROR: yfinance not installed. Installing...")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "yfinance"])
+        import yfinance as yf
     
-    # Look for CSV in current directory or parent directory
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    csv_file = os.path.join(script_dir, csv_filename)
+    # Download data from Yahoo Finance
+    # Format dates for yfinance (it expects YYYY-MM-DD strings)
+    start_str = start_date.strftime('%Y-%m-%d')
+    end_str = (end_date + timedelta(days=1)).strftime('%Y-%m-%d')  # Add 1 day to include end date
     
-    if not os.path.exists(csv_file):
-        # Try parent directory if running from reports/
-        parent_dir = os.path.dirname(script_dir)
-        csv_file = os.path.join(parent_dir, 'winning-strategy-template', csv_filename)
-        
-        if not os.path.exists(csv_file):
-            raise FileNotFoundError(
-                f"Real data file not found: {csv_filename}\n"
-                f"Searched: {script_dir}\n"
-                f"Please ensure CSV files are in the same directory as backtest_historical.py"
-            )
+    # Optional: Configure proxy if environment variable is set
+    # Usage: set YFINANCE_PROXY=http://127.0.0.1:10808 (Windows)
+    #        export YFINANCE_PROXY=http://127.0.0.1:10808 (Linux/Mac)
+    proxy_url = os.environ.get('YFINANCE_PROXY')
+    if proxy_url:
+        print(f"  Using proxy: {proxy_url}")
+        yf.set_config(proxy=proxy_url)
     
-    # Load CSV data
-    import csv as csvlib
+    # Download hourly data from Yahoo Finance
+    ticker = yf.Ticker(symbol)
+    df = ticker.history(start=start_str, end=end_str, interval='1h')
+    
+    if df.empty:
+        raise ValueError(f"No data returned from yfinance for {symbol}. Check your internet connection or set YFINANCE_PROXY if needed.")
+    
+    # Convert to list of (timestamp, price) tuples
     data = []
-    
-    with open(csv_file, 'r') as f:
-        reader = csvlib.DictReader(f)
-        for row in reader:
-            # Parse timestamp
-            timestamp = datetime.strptime(row['timestamp'], '%Y-%m-%d %H:%M:%S')
+    for index, row in df.iterrows():
+        # Ensure timezone-aware timestamp
+        timestamp = index
+        if timestamp.tzinfo is None:
             timestamp = timestamp.replace(tzinfo=timezone.utc)
-            
-            # Get close price (real market price)
-            price = float(row['close'])
-            
-            # Filter by date range
-            if start_date <= timestamp <= end_date:
-                data.append((timestamp, price))
+        else:
+            timestamp = timestamp.astimezone(timezone.utc)
+        
+        # Get close price
+        price = float(row['Close'])
+        
+        # Filter by date range (yfinance might return slightly outside range)
+        if start_date <= timestamp <= end_date:
+            data.append((timestamp, price))
     
     if not data:
         raise ValueError(f"No data found in date range {start_date} to {end_date}")
     
-    print(f"  [OK] Loaded {len(data)} hourly candles from REAL exchange data")
+    print(f"  [OK] Downloaded {len(data)} hourly candles from Yahoo Finance")
     print(f"  Range: {data[0][0].date()} to {data[-1][0].date()}")
     print(f"  Price: ${min(p[1] for p in data):.2f} - ${max(p[1] for p in data):.2f}")
     return data
