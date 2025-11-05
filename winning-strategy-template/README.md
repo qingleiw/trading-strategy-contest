@@ -3,7 +3,7 @@
 ## 🏆 Professional Trading Bot with Real Data
 
 **Strategy Name:** Adaptive Momentum-Reversal Bot  
-**Author:** mengw3  
+**Author:** qlwang  
 **Performance:** +36.10% (Jan-Jun 2024)  
 **Status:** Production Ready ✅
 
